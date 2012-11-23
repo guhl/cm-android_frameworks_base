@@ -3886,7 +3886,7 @@ public final class Settings {
          * constant for the lifetime of the device.  (The value may
          * change if a factory reset is performed on the device.)
          */
-        public static final String ANDROID_ID = "android_id";
+       public static final String ANDROID_ID = "android_id";
 
         /**
          * @deprecated Use {@link android.provider.Settings.Global#BLUETOOTH_ON} instead
@@ -4872,6 +4872,13 @@ public final class Settings {
         public static final String ADVANCED_REBOOT = "advanced_reboot";
 
         /**
+         * Guhl:
+         * Whether to enable permissions managment.
+	 * @hide
+	 */
+	public static final String ENABLE_PERMISSIONS_MANAGEMENT = "enable_permissions_management";       
+
+	/**
          * This are the settings to be backed up.
          *
          * NOTE: Settings are backed up and restored in the order they appear
@@ -4973,6 +4980,8 @@ public final class Settings {
             putStringForUser(cr, Settings.Secure.LOCATION_PROVIDERS_ALLOWED, provider,
                     userId);
         }
+        
+        
     }
 
     /**
@@ -6419,7 +6428,6 @@ public final class Settings {
          * always stored as strings; this function converts the string to an
          * float for you. The default value will be returned if the setting
          * is not defined or not a valid float.
-         *
          * @param cr The ContentResolver to access.
          * @param name The name of the setting to retrieve.
          * @param def Value to return if the setting is not defined.
