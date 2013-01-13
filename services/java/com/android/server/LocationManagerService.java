@@ -16,6 +16,8 @@
 
 package com.android.server;
 
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -89,6 +91,7 @@ import java.util.Set;
 public class LocationManagerService extends ILocationManager.Stub implements Runnable {
     private static final String TAG = "LocationManagerService";
     public static final boolean D = false;
+    public static final boolean PFF_D = true;
 
     private static final String WAKELOCK_KEY = TAG;
     private static final String THREAD_NAME = TAG;
@@ -1305,7 +1308,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
                         packageName);
                 return null;
             }
-
+            
             synchronized (mLock) {
                 // Figure out the provider. Either its explicitly request (deprecated API's),
                 // or use the fused provider
@@ -1320,6 +1323,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
                 if (location == null) {
                     return null;
                 }
+                
                 if (allowedResolutionLevel < RESOLUTION_LEVEL_FINE) {
                     Location noGPSLocation = location.getExtraLocation(Location.EXTRA_NO_GPS_LOCATION);
                     if (noGPSLocation != null) {
@@ -1537,8 +1541,8 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
             Log.w(TAG, "Dropping incomplete location: " + location);
             return;
         }
-
         mLocationHandler.removeMessages(MSG_LOCATION_CHANGED, location);
+
         Message m = Message.obtain(mLocationHandler, MSG_LOCATION_CHANGED, location);
         m.arg1 = (passive ? 1 : 0);
         mLocationHandler.sendMessageAtFrontOfQueue(m);
@@ -1580,13 +1584,61 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
         return true;
     }
 
+    private String getAppNameByPID(Context context, int pid){
+        ActivityManager manager 
+                   = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+
+        for(RunningAppProcessInfo processInfo : manager.getRunningAppProcesses()){
+            if(processInfo.pid == pid){
+                return processInfo.processName;
+            }
+        }
+        return "";
+    }    
+    
+    private Location spoofLocation(Location location, int pid, int uid){
+    	
+    	String appName = "";
+    	if (PFF_D){
+    		appName = getAppNameByPID(mContext, pid);
+    	}
+        int res_f = mContext.pffEnforceCallingPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, 
+        		"Requires ACCESS_FINE_LOCATION", pid, uid);
+    	if (PFF_D) {Log.d(TAG, "spoofLocation: pffEnforceCallingPermission ACCESS_FINE_LOCATION pid="+pid+" uid="+uid+" appName="+appName+" res="+res_f);}
+        int res_c = mContext.pffEnforceCallingPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION, 
+        		"Requires ACCESS_COARSE_LOCATION", pid, uid);
+        if (PFF_D) {Log.d(TAG, "spoofLocation: pffEnforceCallingPermission ACCESS_COARSE_LOCATION pid="+pid+" uid="+uid+" appName="+appName+" res="+res_c);}
+    	if (location!=null){
+    		if (res_f==PackageManager.PERMISSION_SPOOFED){
+            	if (PFF_D) {Log.d(TAG, "spoofLocation: FINE spoofed");}
+    	    	location.setLatitude(27.988056);
+    	    	location.setLongitude(86.925278);
+    	    	location.setAltitude(8848.0);			
+    		}
+          	Location noGPSLocation = location.getExtraLocation(Location.EXTRA_NO_GPS_LOCATION);
+	    	if (noGPSLocation!=null) {
+	    		if (res_c==PackageManager.PERMISSION_SPOOFED || 
+	    				(res_c!=PackageManager.PERMISSION_GRANTED && res_f==PackageManager.PERMISSION_SPOOFED) ){
+	            	if (PFF_D) {Log.d(TAG, "spoofLocation: COARSE spoofed");}
+			    	noGPSLocation.setLatitude(27.988056);
+			    	noGPSLocation.setLongitude(86.925278);
+			    	noGPSLocation.setAltitude(8848.0);
+			    	location.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, noGPSLocation);
+	            }
+	    	}
+	        
+    	}
+    	return location;
+    }
+    
     private void handleLocationChangedLocked(Location location, boolean passive) {
-        if (D) Log.d(TAG, "incoming location: " + location);
+
+    	if (D || PFF_D) Log.d(TAG, "incoming location: " + location);
 
         long now = SystemClock.elapsedRealtime();
         String provider = (passive ? LocationManager.PASSIVE_PROVIDER : location.getProvider());
 
-        // Skip if the provider is unknown.
+        // Skip if thse provider is unknown.
         LocationProviderInterface p = mProvidersByName.get(provider);
         if (p == null) return;
 
@@ -1654,6 +1706,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
             } else {
                 notifyLocation = lastLocation;  // use fine location
             }
+            notifyLocation = spoofLocation(notifyLocation, receiver.mPid, receiver.mUid);
             if (notifyLocation != null) {
                 Location lastLoc = r.mLastFixBroadcast;
                 if ((lastLoc == null) || shouldBroadcastSafe(notifyLocation, lastLoc, r, now)) {

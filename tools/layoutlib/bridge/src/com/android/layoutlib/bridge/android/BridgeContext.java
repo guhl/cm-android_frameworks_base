@@ -1381,6 +1381,10 @@ public final class BridgeContext extends Context {
         return null;
     }
 
+    public int pffEnforceCallingPermission(String permission, String message, int pid, int uid) {
+    	return 0;
+    }
+    
     public int pffEnforceCallingOrSelfPermission(String permission, String message) {
     	return 0;
 	}

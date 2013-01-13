@@ -3007,7 +3007,6 @@ public abstract class PackageManager {
      * 			  uid will be returned.
      *
      * @param packageName Name of the package which revoked permissions are needed
-     * @hide
      */
 
     public abstract String[] getSpoofedPermissions(String packageName);
@@ -3019,8 +3018,7 @@ public abstract class PackageManager {
      * 			  permissions for that shared uid.
      *
      * @param packageName Name of the package which revoked permissions are needed
-     * @param the spoofed permissions.
-     * @hide
+     * @param perms the spoofed permissions.
      */
     public abstract void setSpoofedPermissions(String packageName, String[] perms);
     
