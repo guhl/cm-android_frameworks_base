@@ -44,6 +44,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 
 /**
  * Content providers are one of the primary building blocks of Android applications, providing
@@ -172,6 +174,9 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
      * @hide
      */
     class Transport extends ContentProviderNative {
+        static final String PFF_LOG_TAG = "PFF_CONTENT_PROVIDER_TRANSPORT";
+    	static final int pff_dbg_level = 1;
+        
         ContentProvider getContentProvider() {
             return ContentProvider.this;
         }
@@ -185,9 +190,43 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
         public Cursor query(Uri uri, String[] projection,
                 String selection, String[] selectionArgs, String sortOrder,
                 ICancellationSignal cancellationSignal) {
+        	if (pff_dbg_level>=3) {Log.d(PFF_LOG_TAG, "query: uri before enforceReadPermission="+uri);}
+//          testing code
+    		final String componentPerm = getReadPermission();
+    		final String path = uri.getPath();
+        	if (pff_dbg_level>=3) {Log.d(PFF_LOG_TAG, "query: componentPerm="+componentPerm+", path="+path);}
+        	if (componentPerm!=null){
+        		Context context = getContext();
+        		if (context.getPackageManager().isSpoofablePermission(componentPerm)){
+	        		int res = context.pffEnforceCallingPermission(componentPerm, "", Binder.getCallingPid(), Binder.getCallingUid());
+	    			if (pff_dbg_level>=2) {Log.d(PFF_LOG_TAG, "query: pffEnforceCallingPermission = "+res);}
+	    			if (res == PackageManager.PERMISSION_SPOOFED){
+	        			if (pff_dbg_level>=1) {Log.d(PFF_LOG_TAG, "query: permission "+componentPerm+" spoofed!");}
+	        			if (pff_dbg_level>=2) {Log.d(PFF_LOG_TAG, "query: uri was: "+uri);}
+	        			Uri.Builder builder = uri.buildUpon();
+	        			String limit = uri.getQueryParameter("limit");
+	        			String authority = uri.getAuthority();
+	        			if (pff_dbg_level>=3) {Log.d(PFF_LOG_TAG, "query: uri, path="+path+
+	        					                                            ", authority="+authority+
+	        					                                            ", getScheme()"+uri.getScheme()+
+	        					                                            ", getSchemeSpecificPart()"+uri.getSchemeSpecificPart()+
+	        					                                            ", getQuery()"+uri.getQuery()+
+	        					                                            ", limit="+limit);}	  
+	        			if (limit!=null){
+	        				builder.clearQuery();
+		        			if (pff_dbg_level>=3) {Log.d(PFF_LOG_TAG, "query: builder.clearQuery() -> builder.build()="+builder.build());}
+	        			}
+        				builder.appendQueryParameter("limit", String.valueOf(0));
+	        			uri=builder.build();
+	        			if (pff_dbg_level>=2) {Log.d(PFF_LOG_TAG, "query: uri is: "+uri);}
+	        		}
+        		}
+        	}
             enforceReadPermission(uri);
-            return ContentProvider.this.query(uri, projection, selection, selectionArgs, sortOrder,
-                    CancellationSignal.fromTransport(cancellationSignal));
+            Cursor cur = ContentProvider.this.query(uri, projection, selection, selectionArgs, sortOrder,
+                         CancellationSignal.fromTransport(cancellationSignal));
+        	if (pff_dbg_level>=3) {Log.d(PFF_LOG_TAG, "query: cur="+cur);}
+            return cur;
         }
 
         @Override
@@ -278,6 +317,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
             final int pid = Binder.getCallingPid();
             final int uid = Binder.getCallingUid();
             String missingPerm = null;
+            
 
             if (UserHandle.isSameApp(uid, mMyUid)) {
                 return;
