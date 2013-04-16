@@ -33,6 +33,7 @@ import android.provider.Settings;
 import android.util.Slog;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
 
 import com.android.systemui.statusbar.policy.PieController.Position;
@@ -56,8 +57,8 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     /* DEBUG */
     private long mActivateStartDebug = 0;
 
-    private static final int TIME_FADEIN = 600;
-    private static final int TIME_FADEIN_DELAY = 1000;
+    private static final int TIME_FADEIN = 300;
+    private static final int TIME_FADEIN_DELAY = 400;
 
     private static final int COLOR_BACKGROUND = 0xee000000;
 
@@ -80,6 +81,14 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     private Point mCenter = new Point(0, 0);
     private Position mPosition = Position.BOTTOM;
     private Position mLayoutDoneForPosition;
+
+    private Handler mHandler;
+    private Runnable mLongPressRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateActiveItem(mActiveItem, true);
+        }
+    };
 
     private ValueAnimator mBackgroundAnimator
             = ValueAnimator.ofFloat(0.0f, 1.0f).setDuration(TIME_FADEIN);
@@ -136,11 +145,6 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
             mOuter = outer;
         }
 
-        public boolean hit(float alpha, int radius) {
-            return (alpha > mStart) && (alpha < mStart + mSweep)
-                    && (radius > mInner) && (radius < mOuter);
-        }
-
         // Display on all positions
         public final static int DISPLAY_ALL = Position.LEFT.FLAG
                 | Position.BOTTOM.FLAG
@@ -152,8 +156,6 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
                 | Position.RIGHT.FLAG;
         // The PieDrawable is visible, note that slice visibility overrides item visibility
         public final static int VISIBLE = 0x10;
-        // The item (?) is selected
-        public final static int SELECTED = 0x20;
 
         public int flags;
     };
@@ -185,6 +187,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     private List<PieSlice> mSlices = new ArrayList<PieSlice>();
     private List<PieDrawable> mDrawableCache = new ArrayList<PieDrawable>();
     private PieItem mActiveItem;
+    private boolean mLongPressed = false;
 
     private class SnapPoint {
         private final int mX;
@@ -270,6 +273,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     public PieLayout(Context context) {
         super(context);
 
+        mHandler = new Handler();
         mBackgroundAnimator.addUpdateListener(mUpdateListener);
 
         setDrawingCacheEnabled(false);
@@ -447,15 +451,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
                         newItem = tmp;
                     }
                 }
-                if (newItem != mActiveItem) {
-                    if (newItem != null) {
-                        newItem.setSelected(true);
-                    }
-                    if (mActiveItem != null) {
-                        mActiveItem.setSelected(false);
-                    }
-                    mActiveItem = newItem;
-                }
+                updateActiveItem(newItem, mLongPressed);
             }
 
             if (action == MotionEvent.ACTION_UP) {
@@ -466,13 +462,44 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
                     }
                 } else {
                     if (mActiveItem != null) {
-                        mActiveItem.onClickCall();
+                        mActiveItem.onClickCall(mLongPressed);
                     }
                 }
                 PieLayout.this.exit();
             }
+
+            if (action == MotionEvent.ACTION_CANCEL) {
+                PieLayout.this.exit();
+            }
         }
         return true;
+    }
+
+    private void updateActiveItem(PieItem newActiveItem, boolean newLongPressed) {
+        if (mActiveItem != newActiveItem || mLongPressed != newLongPressed) {
+            mHandler.removeCallbacks(mLongPressRunnable);
+            if (mActiveItem != null) {
+                mActiveItem.setSelected(false, false);
+            }
+            if (newActiveItem != null) {
+                boolean canLongPressed = (newActiveItem.flags & PieItem.CAN_LONG_PRESS) != 0;
+                newLongPressed = newLongPressed && canLongPressed;
+                newActiveItem.setSelected(true, newLongPressed);
+                if (canLongPressed && !newLongPressed) {
+                    mHandler.postDelayed(mLongPressRunnable,
+                            (int) (ViewConfiguration.getLongPressTimeout() * 1.5f));
+                }
+                // if the fade in hasn't started yet, restart again
+                if (!mBackgroundAnimator.isRunning() && mBackgroundFraction == 0.0f) {
+                    mBackgroundAnimator.cancel();
+                    mBackgroundAnimator.start();
+                }
+            } else {
+                newLongPressed = false;
+            }
+        }
+        mActiveItem = newActiveItem;
+        mLongPressed = newLongPressed;
     }
 
     @Override
@@ -580,7 +607,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
         }
 
         mBackgroundFraction = 0.0f;
-        mBackgroundAnimator.setStartDelay(TIME_FADEIN_DELAY);
+        mBackgroundAnimator.setStartDelay(ViewConfiguration.getLongPressTimeout() * 2);
         mBackgroundAnimator.start();
 
         setVisibility(View.VISIBLE);
@@ -601,9 +628,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
             }
         }
 
-        if (mActiveItem != null) {
-            mActiveItem.setSelected(false);
-        }
+        updateActiveItem(null, false);
 
         mActive = false;
     }
@@ -615,7 +640,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
         if (!mActive) {
             mAnimationListenerCache.clear();
             mDrawableCache.clear();
-            mActiveItem = null;
+            updateActiveItem(null, false);
         }
     }
 

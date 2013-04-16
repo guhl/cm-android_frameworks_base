@@ -44,6 +44,7 @@ public class PieItem extends PieLayout.PieDrawable {
 
     private Paint mBackgroundPaint = new Paint();
     private Paint mSelectedPaint = new Paint();
+    private Paint mLongPressPaint = new Paint();
     private Paint mOutlinePaint = new Paint();
 
     private View mView;
@@ -68,12 +69,30 @@ public class PieItem extends PieLayout.PieDrawable {
     }
     private PieOnClickListener mOnClickListener = null;
 
-    public PieItem(Context context, PieLayout parent, int width, Object tag, View view) {
+    public interface PieOnLongClickListener {
+        public void onLongClick(PieItem item);
+    }
+    private PieOnLongClickListener mOnLongClickListener = null;
+
+    /**
+     * The item is selected / has the focus from the gesture.
+     */
+    public final static int SELECTED = 0x100;
+    /**
+     * The item was long pressed.
+     */
+    public final static int LONG_PRESSED = 0x200;
+    /**
+     * The item can be long pressed.
+     */
+    public final static int CAN_LONG_PRESS = 0x400;
+
+    public PieItem(Context context, PieLayout parent, int flags, int width, Object tag, View view) {
         mView = view;
         mPieLayout = parent;
         this.tag = tag;
         this.width = width;
-        flags = PieDrawable.VISIBLE | PieDrawable.DISPLAY_ALL;
+        this.flags = flags | PieDrawable.VISIBLE | PieDrawable.DISPLAY_ALL;
 
         final Resources res = context.getResources();
 
@@ -81,6 +100,8 @@ public class PieItem extends PieLayout.PieDrawable {
         mBackgroundPaint.setAntiAlias(true);
         mSelectedPaint.setColor(res.getColor(R.color.pie_selected_color));
         mSelectedPaint.setAntiAlias(true);
+        mLongPressPaint.setColor(res.getColor(R.color.pie_long_pressed_color));
+        mLongPressPaint.setAntiAlias(true);
         mOutlinePaint.setColor(res.getColor(R.color.pie_outline_color));
         mOutlinePaint.setAntiAlias(true);
         mOutlinePaint.setStyle(Style.STROKE);
@@ -97,6 +118,15 @@ public class PieItem extends PieLayout.PieDrawable {
         mOnClickListener = onClickListener;
     }
 
+    public void setOnLongClickListener(PieOnLongClickListener onLongClickListener) {
+        mOnLongClickListener = onLongClickListener;
+        if (onLongClickListener != null) {
+            flags |= CAN_LONG_PRESS;
+        } else {
+            flags &= ~CAN_LONG_PRESS;
+        }
+    }
+
     public void show(boolean show) {
         if (show) {
             flags |= PieLayout.PieDrawable.VISIBLE;
@@ -105,12 +135,13 @@ public class PieItem extends PieLayout.PieDrawable {
         }
     }
 
-    public void setSelected(boolean selected) {
+    public void setSelected(boolean selected, boolean longPressed) {
         mPieLayout.postInvalidate();
+        longPressed = longPressed & (flags & CAN_LONG_PRESS) != 0;
         if (selected) {
-            flags |= PieLayout.PieDrawable.SELECTED;
+            flags |= longPressed ? SELECTED | LONG_PRESSED : SELECTED;
         } else {
-            flags &= ~PieLayout.PieDrawable.SELECTED;
+            flags &= ~SELECTED & ~LONG_PRESSED;
         }
     }
 
@@ -158,10 +189,14 @@ public class PieItem extends PieLayout.PieDrawable {
 
     @Override
     public void draw(Canvas canvas, Position position) {
-        canvas.drawPath(mPath, (flags & PieDrawable.SELECTED) != 0
-                ? mSelectedPaint : mBackgroundPaint);
-        canvas.drawPath(mPath, (flags & PieDrawable.SELECTED) != 0
-                ? mSelectedPaint : mOutlinePaint);
+        if ((flags & SELECTED) != 0) {
+            Paint paint = (flags & LONG_PRESSED) == 0
+                    ? mSelectedPaint : mLongPressPaint;
+            canvas.drawPath(mPath, paint);
+        } else {
+            canvas.drawPath(mPath, mBackgroundPaint);
+            canvas.drawPath(mPath, mOutlinePaint);
+        }
 
         if (mView != null) {
             int state = canvas.save();
@@ -187,10 +222,21 @@ public class PieItem extends PieLayout.PieDrawable {
         return null;
     }
 
-    /* package */ void onClickCall() {
-        if (mOnClickListener != null) {
-            mOnClickListener.onClick(this);
+    /* package */ void onClickCall(boolean longPressed) {
+        if (!longPressed) {
+            if (mOnClickListener != null) {
+                mOnClickListener.onClick(this);
+            }
+        } else {
+            if (mOnLongClickListener != null) {
+                mOnLongClickListener.onLongClick(this);
+            }
         }
+    }
+
+    private boolean hit(float alpha, int radius) {
+        return (alpha > mStart) && (alpha < mStart + mSweep)
+                && (radius > mInner && radius < mOuter);
     }
 
     private Path getOutline(float scale) {
