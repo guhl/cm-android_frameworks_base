@@ -53,6 +53,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Parcelable;
 import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteException;
@@ -1606,6 +1607,7 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
     
     private Location pffSpoofLocation(Location location, int pid, int uid){
     	
+    	if (PFF_D) {Log.d(TAG, "pff spoofLocation begin location: "+location);}
     	String packageName = "";
     	if (PFF_D){
     		packageName = pffGetAppNameByPid(mContext, pid);
@@ -1619,12 +1621,12 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
     	if (location!=null){
     		LocationBean locationBean = mPFFInfoDatabase.findLocationByDescription("gps");
     		if (locationBean == null) {
-    	        if (PFF_D) {Log.d(TAG, "pff spoofLocation: pffEnforceCallingPermission locationBean==null adding default");}
+    	        if (PFF_D) {Log.d(TAG, "pff spoofLocation: locationBean==null adding default");}
     			locationBean = mPFFInfoDatabase.addDefaultLocation();
     		}  			
-	        if (PFF_D) {Log.d(TAG, "pff spoofLocation: pffEnforceCallingPermission locationBean lat="+locationBean.getLatitude()
-	        		                                                                           +",lon="+locationBean.getLongitude()
-	        		                                                                           +",alt="+locationBean.getAltitude());}        		                                                                           
+	        if (PFF_D) {Log.d(TAG, "pff spoofLocation: locationBean lat="+locationBean.getLatitude()
+	        		                                             +",lon="+locationBean.getLongitude()
+	        		                                             +",alt="+locationBean.getAltitude());}        		                                                                           
     		if (res_f==PackageManager.PERMISSION_SPOOFED){
             	if (PFF_D) {Log.d(TAG, "pff spoofLocation: FINE spoofed");}
     	    	location.setLatitude(locationBean.getLatitude());
@@ -1632,20 +1634,38 @@ public class LocationManagerService extends ILocationManager.Stub implements Run
     	    	// leave the altidute as it is provided by GPS
     	    	// location.setAltitude(locationBean.getAltitude());			
     		}
+    		
+    		Bundle extras = location.getExtras();
+        	if (PFF_D) {Log.d(TAG, "pff spoofLocation: extras = "+extras);}
+
+            if (extras != null) {
+                Parcelable coarseParc = extras.getParcelable("coarseLocation");
+            	if (PFF_D) {Log.d(TAG, "pff spoofLocation: coarseParc = "+coarseParc);}
+                Parcelable nogpsParc = extras.getParcelable("noGPSLocation");
+            	if (PFF_D) {Log.d(TAG, "pff spoofLocation: nogpsParc = "+nogpsParc);}          	
+            }            	
+        	
           	Location noGPSLocation = location.getExtraLocation(Location.EXTRA_NO_GPS_LOCATION);
 	    	if (noGPSLocation!=null) {
 	    		if (res_c==PackageManager.PERMISSION_SPOOFED || 
 	    				(res_c!=PackageManager.PERMISSION_GRANTED && res_f==PackageManager.PERMISSION_SPOOFED) ){
-	            	if (PFF_D) {Log.d(TAG, "pff spoofLocation: COARSE spoofed");}
+	            	if (PFF_D) {Log.d(TAG, "pff spoofLocation: COARSE spoofed - changing noGPSLocation");}
 			    	noGPSLocation.setLatitude(locationBean.getLatitude());
 			    	noGPSLocation.setLongitude(locationBean.getLongitude());
+			    	Location coarseLocation = noGPSLocation.getExtraLocation(Location.EXTRA_COARSE_LOCATION);
+			    	if (coarseLocation!=null) {
+		            	if (PFF_D) {Log.d(TAG, "pff spoofLocation: COARSE spoofed - changing coarseLocation");}
+		            	coarseLocation.setLatitude(locationBean.getLatitude());
+		            	coarseLocation.setLongitude(locationBean.getLongitude());
+		            	noGPSLocation.setExtraLocation(Location.EXTRA_COARSE_LOCATION, coarseLocation);		    		
+			    	}
 	    	    	// leave the altidute as it is provided by noGPS
 			    	// noGPSLocation.setAltitude(locationBean.getAltitude());
 			    	location.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, noGPSLocation);
 	            }
-	    	}
-	        
+	    	}	        
     	}
+    	if (PFF_D) {Log.d(TAG, "pff spoofLocation end location: "+location);}
     	return location;
     }
     
