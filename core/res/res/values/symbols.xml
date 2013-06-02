@@ -1994,6 +1994,12 @@
   <java-symbol type="string" name="symbol_picker_z" />
   <java-symbol type="string" name="symbol_picker_Z" />
 
+  <!-- Pie Controls -->
+  <java-symbol type="bool" name="config_allowPieService" />
+  <java-symbol type="dimen" name="pie_trigger_thickness" />
+  <java-symbol type="dimen" name="pie_trigger_distance" />
+  <java-symbol type="dimen" name="pie_perpendicular_distance" />
+
   <!-- Guhl: privacy framework -->
   <java-symbol type="xml" name="spoofed_permissions" />
   <java-symbol type="xml" name="revoked_permissions" />
@@ -2003,7 +2009,6 @@
   <java-symbol type="string" name="aerr_revoked_application" />
   <java-symbol type="string" name="aerr_revoked_process" />
   <java-symbol type="string" name="reset_perms" />
-  
   <!-- Guhl: end privacy framework -->
 
 </resources>
