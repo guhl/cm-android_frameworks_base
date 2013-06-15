@@ -2280,8 +2280,8 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     public void grantPermission(String packageName, String permissionName) {
-        mContext.enforceCallingOrSelfPermission(
-                android.Manifest.permission.GRANT_REVOKE_PERMISSIONS, null);
+//        mContext.enforceCallingOrSelfPermission(
+//                android.Manifest.permission.GRANT_REVOKE_PERMISSIONS, null);
         synchronized (mPackages) {
             final PackageParser.Package pkg = mPackages.get(packageName);
             if (pkg == null) {
@@ -2319,10 +2319,10 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (pkg == null) {
                 throw new IllegalArgumentException("Unknown package: " + packageName);
             }
-            if (pkg.applicationInfo.uid != Binder.getCallingUid()) {
-                mContext.enforceCallingOrSelfPermission(
-                        android.Manifest.permission.GRANT_REVOKE_PERMISSIONS, null);
-            }
+//            if (pkg.applicationInfo.uid != Binder.getCallingUid()) {
+//                mContext.enforceCallingOrSelfPermission(
+//                        android.Manifest.permission.GRANT_REVOKE_PERMISSIONS, null);
+//            }
             final BasePermission bp = mSettings.mPermissions.get(permissionName);
             if (bp == null) {
                 throw new IllegalArgumentException("Unknown permission: " + packageName);
@@ -6173,8 +6173,8 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     public String[] getRevokedPermissions(final String pkgName) {
-		mContext.enforceCallingOrSelfPermission(
-		android.Manifest.permission.REVOKE_PERMISSIONS, null);
+//		mContext.enforceCallingOrSelfPermission(
+//		android.Manifest.permission.REVOKE_PERMISSIONS, null);
 
 		String[] result = null;
 		synchronized (mPackages) {
@@ -10649,7 +10649,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
     @Override
     public void setPermissionEnforced(String permission, boolean enforced) {
-        mContext.enforceCallingOrSelfPermission(GRANT_REVOKE_PERMISSIONS, null);
+//        mContext.enforceCallingOrSelfPermission(GRANT_REVOKE_PERMISSIONS, null);
         if (READ_EXTERNAL_STORAGE.equals(permission)) {
             synchronized (mPackages) {
                 if (mSettings.mReadExternalStorageEnforced == null
