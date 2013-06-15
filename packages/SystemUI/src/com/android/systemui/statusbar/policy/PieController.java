@@ -144,21 +144,12 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
                 // restore listener state immediately (after the bookkeeping), and since the
                 // search panel is a single gesture we will not trigger again
                 mHandler.obtainMessage(MSG_PIE_RESTORE_LISTENER_STATE).sendToTarget();
-<<<<<<< HEAD
-            } else if (mPieContainer != null) {
-                // set the snap points depending on current trigger and mask
-                mPieContainer.setSnapPoints(mPieTriggerMask & ~mPieTriggerSlots);
-                activateFromListener(touchX, touchY, position);
-                // give the main thread some time to do the bookkeeping
-                mHandler.obtainMessage(MSG_PIE_GAIN_FOCUS).sendToTarget();
-=======
             } else if (mPieContainer != null && activateFromListener(touchX, touchY, position)) {
                 // give the main thread some time to do the bookkeeping
                 mHandler.obtainMessage(MSG_PIE_GAIN_FOCUS).sendToTarget();
             } else {
                 // if anything goes wrong, just quit the ongoing activation
                 mPieActivationListener.restoreListenerState();
->>>>>>> upstream/cm-10.1
             }
         }
     };
@@ -176,17 +167,12 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
                             InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
                     break;
                 case MSG_PIE_GAIN_FOCUS:
-<<<<<<< HEAD
-                    if (!mPieActivationListener.gainTouchFocus(mPieContainer.getWindowToken())) {
-                        mPieContainer.exit();
-=======
                     if (mPieContainer != null) {
                         if (!mPieActivationListener.gainTouchFocus(mPieContainer.getWindowToken())) {
                             mPieContainer.exit();
                         }
                     } else {
                         mPieActivationListener.restoreListenerState();
->>>>>>> upstream/cm-10.1
                     }
                     break;
                 case MSG_PIE_RESTORE_LISTENER_STATE:
@@ -254,16 +240,11 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
                 setupContainer();
                 setupNavigationItems();
                 setupListener();
-<<<<<<< HEAD
-            } else {
-                detachContainer();
-=======
             } else if (!isShowing()) {
                 detachContainer();
             } else {
                 // delay detach to #onExit()
                 mIsDetaching = true;
->>>>>>> upstream/cm-10.1
             }
         }
     }
@@ -317,26 +298,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
         // start listening for changes (calls setupListener & setupNavigationItems)
         mSettingsObserver.observe();
         mSettingsObserver.onChange(true);
-<<<<<<< HEAD
-    }
-
-    private void detachContainer() {
-        if (mPieContainer == null) {
-            return;
-        }
-
-        mPieManager.updatePieActivationListener(mPieActivationListener, 0);
-
-        if (mTelephonyManager != null) {
-            mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-        }
-
-        mContext.unregisterReceiver(mBroadcastReceiver);
-
-        mPieContainer.clearSlices();
-        mPieContainer = null;
-=======
->>>>>>> upstream/cm-10.1
     }
 
     public void attachStatusBar(BaseStatusBar statusBar) {
@@ -379,21 +340,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
         mPieContainer.addSlice(mSysInfo);
     }
 
-<<<<<<< HEAD
-    private void setupListener() {
-        ContentResolver resolver = mContext.getContentResolver();
-
-        mPieTriggerSlots = Settings.System.getInt(resolver,
-                Settings.System.PIE_POSITIONS, PiePosition.BOTTOM.FLAG);
-
-        int sensitivity = Settings.System.getInt(resolver,
-                Settings.System.PIE_SENSITIVITY, 3);
-        if (sensitivity < PieServiceConstants.SENSITIVITY_LOWEST
-                || sensitivity > PieServiceConstants.SENSITIVITY_HIGHEST) {
-            sensitivity = PieServiceConstants.SENSITIVITY_DEFAULT;
-        }
-
-=======
     @Override
     public void onExit() {
         mWindowManager.removeView(mPieContainer);
@@ -434,7 +380,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
             sensitivity = PieServiceConstants.SENSITIVITY_DEFAULT;
         }
 
->>>>>>> upstream/cm-10.1
         mPieManager.updatePieActivationListener(mPieActivationListener,
                 sensitivity<<PieServiceConstants.SENSITIVITY_SHIFT
                 | mPieTriggerSlots & mPieTriggerMask);
@@ -507,42 +452,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
         }
     }
 
-<<<<<<< HEAD
-    public void activateFromListener(int touchX, int touchY, PiePosition position) {
-        if (!isShowing()) {
-            doHapticTriggerFeedback();
-
-            mPosition = position;
-            Point center = new Point(touchX, touchY);
-            mPieContainer.activate(center, position);
-            mWindowManager.addView(mPieContainer, generateLayoutParam());
-        }
-    }
-
-    private WindowManager.LayoutParams generateLayoutParam() {
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
-                PixelFormat.TRANSLUCENT);
-        // This title is for debugging only. See: dumpsys window
-        lp.setTitle("PieControlPanel");
-        lp.windowAnimations = android.R.style.Animation;
-        lp.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_BEHIND;
-        return lp;
-    }
-
-    @Override
-    public void onExit() {
-        mWindowManager.removeView(mPieContainer);
-        mPieActivationListener.restoreListenerState();
-    }
-
-=======
     public boolean activateFromListener(int touchX, int touchY, PiePosition position) {
         if (isShowing()) {
             return false;
@@ -577,18 +486,12 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
         return lp;
     }
 
->>>>>>> upstream/cm-10.1
     public void updatePieTriggerMask(int newMask) {
         int oldState = mPieTriggerSlots & mPieTriggerMask;
         mPieTriggerMask = newMask;
 
-<<<<<<< HEAD
-        // first we check, if it would make a change
-        if ((mPieTriggerSlots & mPieTriggerMask) != oldState) {
-=======
         // check if we are active and if it would make a change at all
         if (mPieContainer != null && ((mPieTriggerSlots & mPieTriggerMask) != oldState)) {
->>>>>>> upstream/cm-10.1
             setupListener();
         }
     }
@@ -782,7 +685,7 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
     }
 
     public boolean isShowing() {
-        return mPieContainer.isShowing();
+        return mPieContainer != null && mPieContainer.isShowing();
     }
 
     public boolean isSearchLightEnabled() {
