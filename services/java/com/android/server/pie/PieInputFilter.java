@@ -66,7 +66,11 @@ import java.io.PrintWriter;
  * 5) POSTSYNTHESIZE:
  *    mSyntheticDownTime != -1
  *    All following events will have the down time set to the synthesized ACTION_DOWN event time
+<<<<<<< HEAD
  *    until an ACTION_UP is encountered and the state is reset to LISTEN.
+=======
+ *    until an ACTION_UP or ACTION_CANCEL is encountered and the state is reset to LISTEN.
+>>>>>>> upstream/cm-10.1
  * <p>
  * If you are reading this within Java Doc, you are doing something wrong ;)
  */
@@ -81,7 +85,11 @@ public class PieInputFilter implements IInputFilter {
     private static final boolean DEBUG = false;
     private static final boolean DEBUG_INPUT = false;
     // TODO: Should be turned off in final commit
+<<<<<<< HEAD
     private static final boolean SYSTRACE = true;
+=======
+    private static final boolean SYSTRACE = false;
+>>>>>>> upstream/cm-10.1
 
     private final Handler mHandler;
 
@@ -174,6 +182,10 @@ public class PieInputFilter implements IInputFilter {
                 res.getDimensionPixelSize(R.dimen.pie_perpendicular_distance));
         mTracker.setOnActivationListener(new OnActivationListener() {
             public void onActivation(MotionEvent event, int touchX, int touchY, PiePosition position) {
+<<<<<<< HEAD
+=======
+                // mLock is held by #processMotionEvent
+>>>>>>> upstream/cm-10.1
                 mHandler.obtainMessage(PieService.MSG_PIE_ACTIVATION,
                         touchX, touchY, position).sendToTarget();
                 mState = State.LOCKED;
@@ -307,7 +319,11 @@ public class PieInputFilter implements IInputFilter {
                 case SYNTHESIZE:
                     if (action == MotionEvent.ACTION_MOVE) {
                         clearDelayedMotionEventsLocked();
+<<<<<<< HEAD
                         sendSynthesizedMotionEvent(motionEvent, policyFlags);
+=======
+                        sendSynthesizedMotionEventLocked(motionEvent, policyFlags);
+>>>>>>> upstream/cm-10.1
                         mState = State.POSTSYNTHESIZE;
                     } else {
                         // This is the case where a race condition caught us: We already
@@ -319,7 +335,11 @@ public class PieInputFilter implements IInputFilter {
                     break;
                 case POSTSYNTHESIZE:
                     motionEvent.setDownTime(mSyntheticDownTime);
+<<<<<<< HEAD
                     if (action == MotionEvent.ACTION_UP) {
+=======
+                    if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+>>>>>>> upstream/cm-10.1
                         mState = State.LISTEN;
                         mSyntheticDownTime = -1;
                     }
@@ -396,7 +416,11 @@ public class PieInputFilter implements IInputFilter {
                 if (info.event.getActionMasked() == MotionEvent.ACTION_DOWN) {
                     mSyntheticDownTime = info.event.getDownTime() + offset;
                 }
+<<<<<<< HEAD
                 sendMotionEventWithOffset(info.event, info.policyFlags, mSyntheticDownTime, offset);
+=======
+                sendMotionEventWithOffsetLocked(info.event, info.policyFlags, mSyntheticDownTime, offset);
+>>>>>>> upstream/cm-10.1
                 if (info.event.getActionMasked() == MotionEvent.ACTION_UP) {
                     mSyntheticDownTime = -1;
                 }
@@ -421,11 +445,19 @@ public class PieInputFilter implements IInputFilter {
         }
     }
 
+<<<<<<< HEAD
     private void sendMotionEventWithOffset(MotionEvent event, int policyFlags,
             long downTime, long offset) {
         final int pointerCount = event.getPointerCount();
         PointerCoords[] coords = getTempPointerCoordsWithMinSize(pointerCount);
         PointerProperties[] properties = getTempPointerPropertiesWithMinSize(pointerCount);
+=======
+    private void sendMotionEventWithOffsetLocked(MotionEvent event, int policyFlags,
+            long downTime, long offset) {
+        final int pointerCount = event.getPointerCount();
+        PointerCoords[] coords = getTempPointerCoordsWithMinSizeLocked(pointerCount);
+        PointerProperties[] properties = getTempPointerPropertiesWithMinSizeLocked(pointerCount);
+>>>>>>> upstream/cm-10.1
         for (int i = 0; i < pointerCount; i++) {
             event.getPointerCoords(i, coords[i]);
             event.getPointerProperties(i, properties[i]);
@@ -437,7 +469,11 @@ public class PieInputFilter implements IInputFilter {
                 policyFlags);
     }
 
+<<<<<<< HEAD
     private PointerCoords[] getTempPointerCoordsWithMinSize(int size) {
+=======
+    private PointerCoords[] getTempPointerCoordsWithMinSizeLocked(int size) {
+>>>>>>> upstream/cm-10.1
         final int oldSize = mTempPointerCoords.length;
         if (oldSize < size) {
             PointerCoords[] oldTempPointerCoords = mTempPointerCoords;
@@ -450,7 +486,11 @@ public class PieInputFilter implements IInputFilter {
         return mTempPointerCoords;
     }
 
+<<<<<<< HEAD
     private PointerProperties[] getTempPointerPropertiesWithMinSize(int size) {
+=======
+    private PointerProperties[] getTempPointerPropertiesWithMinSizeLocked(int size) {
+>>>>>>> upstream/cm-10.1
         final int oldSize = mTempPointerProperties.length;
         if (oldSize < size) {
             PointerProperties[] oldTempPointerProperties = mTempPointerProperties;
@@ -463,7 +503,11 @@ public class PieInputFilter implements IInputFilter {
         return mTempPointerProperties;
     }
 
+<<<<<<< HEAD
     private void sendSynthesizedMotionEvent(MotionEvent event, int policyFlags) {
+=======
+    private void sendSynthesizedMotionEventLocked(MotionEvent event, int policyFlags) {
+>>>>>>> upstream/cm-10.1
         if (event.getPointerCount() == 1) {
             event.getPointerCoords(0, mTempPointerCoords[0]);
             event.getPointerProperties(0, mTempPointerProperties[0]);

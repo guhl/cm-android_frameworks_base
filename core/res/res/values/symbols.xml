@@ -2000,6 +2000,9 @@
   <java-symbol type="dimen" name="pie_trigger_distance" />
   <java-symbol type="dimen" name="pie_perpendicular_distance" />
 
+  <!-- Electron Beam -->
+  <java-symbol type="bool" name="config_screenOffAnimation" />
+
   <!-- Guhl: privacy framework -->
   <java-symbol type="xml" name="spoofed_permissions" />
   <java-symbol type="xml" name="revoked_permissions" />
