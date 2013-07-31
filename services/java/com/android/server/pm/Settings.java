@@ -444,10 +444,13 @@ final class Settings {
                             final boolean installed = installUser == null
                                     || installUser.getIdentifier() == UserHandle.USER_ALL
                                     || installUser.getIdentifier() == user.id;
-                            final boolean privacyGuard = android.provider.Settings.Secure.getIntForUser(
+                            boolean privacyGuard = false;
+                            if (installUser != null) {
+                                privacyGuard = android.provider.Settings.Secure.getIntForUser(
                                     mContext.getContentResolver(),
                                     android.provider.Settings.Secure.PRIVACY_GUARD_DEFAULT,
                                     0, user.id) == 1;
+                            }
                             p.setUserState(user.id, COMPONENT_ENABLED_STATE_DEFAULT,
                                     installed,
                                     true, // stopped,
@@ -1379,6 +1382,7 @@ final class Settings {
                     // userId     - application-specific user id
                     // debugFlag  - 0 or 1 if the package is debuggable.
                     // dataPath   - path to package's data path
+                    // seinfo     - seinfo label for the app (assigned at install time)
                     //
                     // NOTE: We prefer not to expose all ApplicationInfo flags for now.
                     //
@@ -1392,6 +1396,8 @@ final class Settings {
                     sb.append((int)ai.uid);
                     sb.append(isDebug ? " 1 " : " 0 ");
                     sb.append(dataPath);
+                    sb.append(" ");
+                    sb.append(ai.seinfo);
                     sb.append("\n");
                     str.write(sb.toString().getBytes());
                 }
@@ -2378,7 +2384,8 @@ final class Settings {
             ps.setInstalled((ps.pkgFlags&ApplicationInfo.FLAG_SYSTEM) != 0, userHandle);
             // Need to create a data directory for all apps under this user.
             installer.createUserData(ps.name,
-                    UserHandle.getUid(userHandle, ps.appId), userHandle);
+                    UserHandle.getUid(userHandle, ps.appId), userHandle,
+                    ps.pkg.applicationInfo.seinfo);
         }
         readDefaultPreferredAppsLPw(userHandle);
         writePackageRestrictionsLPr(userHandle);

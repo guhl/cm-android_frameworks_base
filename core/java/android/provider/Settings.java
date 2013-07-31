@@ -1913,6 +1913,12 @@ public final class Settings {
             "notifications_use_ring_volume";
 
         /**
+         * Whether the blacklisting feature for phone calls is enabled
+         * @hide
+         */
+        public static final String PHONE_BLACKLIST_ENABLED = "phone_blacklist_enabled";
+
+        /**
          * Whether the phone ringtone should be played in an increasing manner
          * @hide
          */
@@ -2124,6 +2130,13 @@ public final class Settings {
          * disabled by the application.
          */
         public static final String ACCELEROMETER_ROTATION = "accelerometer_rotation";
+
+        /**
+         * Control whether the accelerometer will be used to change lockscreen
+         * orientation.  If 0, it will not be used; if 1, it will be used by default.
+         * @hide
+         */
+        public static final String LOCKSCREEN_ROTATION = "lockscreen_rotation";
 
         /**
          * Control the type of rotation which can be performed using the accelerometer
@@ -2412,6 +2425,13 @@ public final class Settings {
          * @hide
          */
         public static final String LOCKSCREEN_TARGETS = "lockscreen_targets";
+
+        /**
+         * Whether music controls should be shown on the lockscreen if a supporting
+         * music player is active.
+         * @hide
+         */
+        public static final String LOCKSCREEN_MUSIC_CONTROLS = "lockscreen_music_controls";
 
         /**
          * @deprecated Use {@link android.provider.Settings.Global#LOW_BATTERY_SOUND}
@@ -2756,6 +2776,19 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_IME_SWITCHER = "status_bar_ime_switcher";
+
+        /**
+         * Whether to collapse the notification area after dismissing the last notification
+         * @hide
+         */
+        public static final String STATUS_BAR_COLLAPSE_ON_DISMISS = "status_bar_collapse_on_dismiss";
+
+        /** @hide */
+        public static final int STATUS_BAR_COLLAPSE_NEVER = 0;
+        /** @hide */
+        public static final int STATUS_BAR_COLLAPSE_IF_EMPTIED = 1;
+        /** @hide */
+        public static final int STATUS_BAR_COLLAPSE_IF_NO_CLEARABLE = 2;
 
          /**
          * Expanded desktop on/off state
@@ -3130,6 +3163,14 @@ public final class Settings {
         public static final String NOTIFICATION_CONVERT_SOUND_TO_VIBRATION = "convert_sound_to_vibration";
 
         /**
+         * Whether to allow notification vibration while notification alerts are disabled
+         * (e.g. during phone calls). The vibration pattern to be used will be a subtle one;
+         * custom vibration is disabled at that point.
+         * @hide
+         */
+        public static final String NOTIFICATION_VIBRATE_DURING_ALERTS_DISABLED = "vibrate_while_no_alerts";
+
+        /**
          * Custom navring actions
          *
          * @hide
@@ -3201,6 +3242,7 @@ public final class Settings {
             TIME_12_24,
             DATE_FORMAT,
             ACCELEROMETER_ROTATION,
+            LOCKSCREEN_ROTATION,
             USER_ROTATION,
             DTMF_TONE_WHEN_DIALING,
             DTMF_TONE_TYPE_WHEN_DIALING,
@@ -3217,6 +3259,7 @@ public final class Settings {
             NOTIFICATION_LIGHT_PULSE_DEFAULT_COLOR,
             NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_ON,
             NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_OFF,
+            NOTIFICATION_VIBRATE_DURING_ALERTS_DISABLED,
             SIP_CALL_OPTIONS,
             SIP_RECEIVE_CALLS,
             POINTER_SPEED,
@@ -4245,6 +4288,25 @@ public final class Settings {
         public static final String SETTINGS_CLASSNAME = "settings_classname";
 
         /**
+         * SELinux enforcing status.
+         * 1 - SELinux is in enforcing mode.
+         * 0 - SELinux is in permissive mode.
+         *
+         * @hide
+         */
+        public static final String SELINUX_ENFORCING = "selinux_enforcing";
+
+        /**
+         * Stores the values of the SELinux booleans. Stored as a comma
+         * seperated list of values, each value being of the form
+         * {@code boolean_name:value} where value is 1 if the boolean is set
+         * and 0 otherwise. Example: {@code bool1:1,bool2:0}.
+         *
+         * @hide
+         */
+        public static final String SELINUX_BOOLEANS = "selinux_booleans";
+
+        /**
          * @deprecated Use {@link android.provider.Settings.Global#USB_MASS_STORAGE_ENABLED} instead
          */
         @Deprecated
@@ -5055,6 +5117,8 @@ public final class Settings {
             TOUCH_EXPLORATION_ENABLED,
             ACCESSIBILITY_ENABLED,
             ACCESSIBILITY_SPEAK_PASSWORD,
+            SELINUX_ENFORCING,
+            SELINUX_BOOLEANS,
             TTS_USE_DEFAULTS,
             TTS_DEFAULT_RATE,
             TTS_DEFAULT_PITCH,

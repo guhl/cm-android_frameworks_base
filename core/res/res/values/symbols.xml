@@ -863,6 +863,10 @@
   <java-symbol type="string" name="media_route_status_available" />
   <java-symbol type="string" name="media_route_status_not_available" />
   <java-symbol type="string" name="owner_name" />
+  <java-symbol type="string" name="policylab_enforceSelinux" />
+  <java-symbol type="string" name="policydesc_enforceSelinux" />
+  <java-symbol type="string" name="policylab_enforceMmac" />
+  <java-symbol type="string" name="policydesc_enforceMmac" />
 
   <java-symbol type="plurals" name="abbrev_in_num_days" />
   <java-symbol type="plurals" name="abbrev_in_num_hours" />
@@ -1859,6 +1863,7 @@
   <java-symbol type="bool" name="config_intrusiveBatteryLed" />
   <java-symbol type="bool" name="config_multiColorBatteryLed" />
   <java-symbol type="array" name="notification_light_package_mapping" />
+  <java-symbol type="array" name="config_notificationNoAlertsVibePattern" />
 
   <!-- Power menu -->
   <java-symbol type="string" name="global_action_screenshot" />
