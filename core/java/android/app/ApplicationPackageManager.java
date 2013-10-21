@@ -21,6 +21,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.pff.LocationBean;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ComponentInfo;
@@ -1322,6 +1323,103 @@ final class ApplicationPackageManager extends PackageManager {
         return null;
     }
 
+    @Override
+    public String[] getSpoofablePermissions() {
+        try {
+            return mPM.getSpoofablePermissions();
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+        return new String[0];    	
+    }
+    
+    @Override
+    public boolean isSpoofablePermission(String perm) {
+    	try {
+            return mPM.isSpoofablePermission(perm);
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+        return false;    	
+    }
+
+    @Override
+    public String[] getSpoofedPermissions(String packageName) {
+        try {
+            return mPM.getSpoofedPermissions(packageName);
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+        return new String[0];
+    }
+
+    @Override
+    public void setSpoofedPermissions(String packageName, String[] perms) {
+        try {
+            mPM.setSpoofedPermissions(packageName, perms);
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+    }
+
+    @Override
+    public String[] getRevokeablePermissions() { 
+        try {
+            return mPM.getRevokeablePermissions();
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+        return new String[0];    	
+    }
+    
+    @Override
+    public boolean isRevokeablePermission(String perm) {
+    	try {
+            return mPM.isRevokeablePermission(perm);
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+        return false;    	
+    }
+
+    @Override
+    public String[] getRevokedPermissions(String packageName) {
+        try {
+        	return mPM.getRevokedPermissions(packageName);
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+        return new String[0];
+    }
+
+    @Override
+    public void setRevokedPermissions(String packageName, String[] perms) {
+        try {
+        	mPM.setRevokedPermissions(packageName, perms);
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+    }
+
+    @Override
+    public LocationBean pffGetLocation() {
+        try {
+        	return mPM.pffGetLocation();
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+        return null;
+    }
+    
+    @Override
+    public void pffSetLocation(LocationBean loc) {
+        try {
+        	mPM.pffSetLocation(loc);
+        } catch (RemoteException e) {
+            // Should never happen!
+        }   	
+    }   
+    
     private final ContextImpl mContext;
     private final IPackageManager mPM;
 

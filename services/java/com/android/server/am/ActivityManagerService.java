@@ -62,6 +62,7 @@ import android.app.Instrumentation;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.backup.IBackupManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -176,6 +177,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
     static final String TAG = "ActivityManager";
     static final String TAG_MU = "ActivityManagerServiceMU";
     static final boolean DEBUG = false;
+    static final boolean PFF_D = true;
     static final boolean localLOGV = DEBUG;
     static final boolean DEBUG_SWITCH = localLOGV || false;
     static final boolean DEBUG_TASKS = localLOGV || false;
@@ -954,7 +956,15 @@ public final class ActivityManagerService  extends ActivityManagerNative
         //public Handler() {
         //    if (localLOGV) Slog.v(TAG, "Handler started!");
         //}
-
+    	private boolean isRevokeEnabled() {
+ 			int defalut = mContext.getResources().getBoolean(
+ 					com.android.internal.R.bool.config_enablePermissionsManagement) ? 1 : 0;
+ 			int res = android.provider.Settings.Secure.getInt(mContext.getContentResolver(),
+ 					android.provider.Settings.Secure.ENABLE_PERMISSIONS_MANAGEMENT,
+ 					defalut);
+ 			return res == 1;
+ 		}
+ 	
         public void handleMessage(Message msg) {
             switch (msg.what) {
             case SHOW_ERROR_MSG: {
@@ -981,8 +991,23 @@ public final class ActivityManagerService  extends ActivityManagerNative
                         return;
                     }
                     if (mShowDialogs && !mSleeping && !mShuttingDown) {
-                        Dialog d = new AppErrorDialog(getUiContext(),
-                                ActivityManagerService.this, res, proc);
+                    	boolean hasRevoked = false;
+             			if (isRevokeEnabled()) {
+             				for (String s: proc.pkgList) {
+             					try {
+             						String[] perms = AppGlobals.getPackageManager().getRevokedPermissions(s);
+             						if (perms != null && perms.length > 0) {
+             							hasRevoked = true;
+             							break;
+             						}
+             					}
+             					catch (RemoteException e) {
+             						// just ignore this.
+             					}
+             				}
+             			}           		                    	
+                        Dialog d = new AppErrorDialog(mContext,
+                                ActivityManagerService.this, res, proc, hasRevoked);
                         d.show();
                         proc.crashDialog = d;
                     } else {
@@ -9055,6 +9080,16 @@ public final class ActivityManagerService  extends ActivityManagerNative
             if (res == AppErrorDialog.FORCE_QUIT_AND_REPORT) {
                 appErrorIntent = createAppErrorIntentLocked(r, timeMillis, crashInfo);
             }
+            else if (res == AppErrorDialog.FORCE_QUIT_AND_RESET_PERMS) {
+            	for (String pkg: r.pkgList) {
+            		long oldId = Binder.clearCallingIdentity();
+            		try {
+            			AppGlobals.getPackageManager().setRevokedPermissions(pkg, new String[0]);           			
+            		} catch (RemoteException e) {            			
+            		}
+            		Binder.restoreCallingIdentity(oldId);
+            	}
+            }
         }
 
         if (appErrorIntent != null) {
@@ -15200,4 +15235,116 @@ public final class ActivityManagerService  extends ActivityManagerNative
         info.applicationInfo = getAppInfoForUser(info.applicationInfo, userId);
         return info;
     }
+    
+
+    /**
+     * Get the packageName for a running process id
+     */
+    private String pffGetAppNameByPID(int pid){
+        for(RunningAppProcessInfo processInfo : getRunningAppProcesses()){
+            if(processInfo.pid == pid){
+                return processInfo.processName;
+            }
+        }
+        return "";
+    }    
+
+    /**
+     * This can be called with or without the global lock held.
+     */
+    public int pffCheckComponentPermission(String permission, int pid, int uid, int reqUid){
+        if (PFF_D) {Log.d(TAG, "pffCheckComponentPermission() called by {pid,uid} = {"+ pid + "," + uid + "}");}
+        // We might be performing an operation on behalf of an indirect binder
+        // invocation, e.g. via {@link #openContentUri}.  Check and adjust the
+        // client identity accordingly before proceeding.
+        Identity tlsIdentity = sCallerIdentity.get();
+        if (tlsIdentity != null) {
+            if (PFF_D) {Log.d(TAG, "pffCheckComponentPermission() called on behalf of an indirect binder!");}
+            if (PFF_D) {Log.d(TAG, "checkComponentPermission() adjusting {pid,uid} to {"
+                    + tlsIdentity.pid + "," + tlsIdentity.uid + "}");}
+            uid = tlsIdentity.uid;
+            pid = tlsIdentity.pid;
+        }
+        // Root, system server and our own process get to do everything.
+        /*  
+        if (uid == 0 || uid == Process.SYSTEM_UID || pid == MY_PID ||
+            !Process.supportsProcesses()) {
+            if (PFF_D) {Log.d(TAG, "pffCheckComponentPermission() called by root or system server -> granted");}
+            return PackageManager.PERMISSION_GRANTED;
+        } */
+        // If the target requires a specific UID, always fail for others.
+        if (reqUid >= 0 && uid != reqUid) {
+            Slog.w(TAG, "Permission denied: checkComponentPermission() reqUid=" + reqUid);
+            return PackageManager.PERMISSION_DENIED;
+        }
+        if (permission == null) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+        try {
+        	String packageName = pffGetAppNameByPID(pid);
+        	int resPid = AppGlobals.getPackageManager().pffCheckPermission(permission, packageName);
+        	int resUid = AppGlobals.getPackageManager().pffCheckUidPermission(permission, uid);
+            if (PFF_D) {Log.d(TAG, "pffCheckComponentPermission() {resPid,resUid} = {"+ resPid + "," + resUid + "}");}
+        	if (resPid==PackageManager.PERMISSION_SPOOFED || resUid==PackageManager.PERMISSION_SPOOFED)
+        		return PackageManager.PERMISSION_SPOOFED;
+        	if (resPid==PackageManager.PERMISSION_GRANTED || resUid==PackageManager.PERMISSION_GRANTED)
+        		return PackageManager.PERMISSION_GRANTED;
+        } catch (RemoteException e) {
+            // Should never happen, but if it does... deny!
+            Slog.e(TAG, "PackageManager is dead?!?", e);
+        }
+        if (PFF_D) {Log.d(TAG, "pffCheckComponentPermission() returning PERMISSION_DENIED");}
+        return PackageManager.PERMISSION_DENIED;    	
+    }
+    
+
+    /**
+     * This can be called with or without the global lock held.
+     */
+/*
+    int pffCheckComponentPermission(String permission, int pid, int uid, int reqUid) {
+        // We might be performing an operation on behalf of an indirect binder
+        // invocation, e.g. via {@link #openContentUri}.  Check and adjust the
+        // client identity accordingly before proceeding.
+        Identity tlsIdentity = sCallerIdentity.get();
+        if (tlsIdentity != null) {
+            Slog.d(TAG, "checkComponentPermission() adjusting {pid,uid} to {"
+                    + tlsIdentity.pid + "," + tlsIdentity.uid + "}");
+            uid = tlsIdentity.uid;
+            pid = tlsIdentity.pid;
+        }
+
+        // Root, system server and our own process get to do everything.
+        if (uid == 0 || uid == Process.SYSTEM_UID || pid == MY_PID ||
+            !Process.supportsProcesses()) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+        // If the target requires a specific UID, always fail for others.
+        if (reqUid >= 0 && uid != reqUid) {
+            Slog.w(TAG, "Permission denied: checkComponentPermission() reqUid=" + reqUid);
+            return PackageManager.PERMISSION_DENIED;
+        }
+        if (permission == null) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+        try {
+            return AppGlobals.getPackageManager()
+                    .pffCheckUidPermission(permission, uid);
+        } catch (RemoteException e) {
+            // Should never happen, but if it does... deny!
+            Slog.e(TAG, "PackageManager is dead?!?", e);
+        }
+        return PackageManager.PERMISSION_DENIED;
+    }*/
+
+    /*
+     * This can be called with or without the global lock held.
+     */
+    public int pffCheckPermission(String permission, int pid, int uid) throws RemoteException {
+        if (permission == null) {
+            return PackageManager.PERMISSION_DENIED;
+        }
+        return pffCheckComponentPermission(permission, pid, uid, -1);
+    }
+    
 }

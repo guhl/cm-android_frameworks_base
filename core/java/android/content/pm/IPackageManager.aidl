@@ -20,6 +20,7 @@ package android.content.pm;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pff.LocationBean;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ContainerEncryptionParams;
@@ -400,4 +401,29 @@ interface IPackageManager {
 
     /** Reflects current DeviceStorageMonitorService state */
     boolean isStorageLow();
+    
+    String[] getSpoofablePermissions();
+
+	boolean isSpoofablePermission(String perm);
+	
+    String[] getSpoofedPermissions(String packageName);
+
+    void setSpoofedPermissions(String packageName, in String[] perms);
+
+    int pffCheckPermission(String permName, String pkgName);
+
+    int pffCheckUidPermission(String pkgName, int uid);
+    
+    String[] getRevokeablePermissions();
+
+	boolean isRevokeablePermission(String perm);
+
+    String[] getRevokedPermissions(String packageName);
+    
+    void setRevokedPermissions(String packageName, in String[] perms);
+    
+    LocationBean pffGetLocation();
+    
+    void pffSetLocation(in LocationBean loc);
+    
 }

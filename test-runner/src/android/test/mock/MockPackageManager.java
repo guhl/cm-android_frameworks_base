@@ -20,6 +20,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.pff.LocationBean;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ContainerEncryptionParams;
@@ -46,7 +47,11 @@ import android.content.res.XmlResourceParser;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * A mock {@link android.content.pm.PackageManager} class.  All methods are non-functional and throw
@@ -616,4 +621,85 @@ public class MockPackageManager extends PackageManager {
     public VerifierDeviceIdentity getVerifierDeviceIdentity() {
         throw new UnsupportedOperationException();
     }
+
+
+    /**
+	* @hide
+	*/
+	@Override
+    public String[] getSpoofablePermissions() {
+		throw new UnsupportedOperationException();
+	}
+	
+    /**
+	* @hide
+	*/
+	@Override
+	public boolean isSpoofablePermission(final String perm)	 {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	* @hide
+	*/
+	@Override
+	public String[] getSpoofedPermissions(String packageName) {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	* @hide
+	*/
+	@Override
+	public void setSpoofedPermissions(String packageName, String[] perms) {
+		throw new UnsupportedOperationException();
+	}    
+	
+    /**
+	* @hide
+	*/
+	@Override
+    public String[] getRevokeablePermissions() {
+		throw new UnsupportedOperationException();
+	}
+	
+    /**
+	* @hide
+	*/
+	@Override
+	public boolean isRevokeablePermission(final String perm)	 {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	* @hide
+	*/
+	@Override
+	public String[] getRevokedPermissions(String packageName) {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	* @hide
+	*/
+	@Override
+	public void setRevokedPermissions(String packageName, String[] perms) {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	* @hide
+	*/
+	@Override
+    public LocationBean pffGetLocation() {
+		throw new UnsupportedOperationException();	
+	}
+    
+	/**
+	* @hide
+	*/
+	@Override
+    public void pffSetLocation(LocationBean loc) {
+		throw new UnsupportedOperationException();			
+	}
 }

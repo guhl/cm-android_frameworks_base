@@ -6810,6 +6810,51 @@ package android.content.pm {
     field public static final android.os.Parcelable.Creator CREATOR;
   }
 
+  public class LocationBean implements android.os.Parcelable {
+    ctor public LocationBean();
+    ctor public LocationBean(android.os.Parcel);
+    ctor public LocationBean(java.lang.String, double, double, double);
+    method public int describeContents();
+    method public java.lang.Double getAltitude();
+    method public java.lang.String getDescription();
+    method public long getId();
+    method public java.lang.Double getLatitude();
+    method public java.lang.Double getLongitude();
+    method public android.content.ContentValues getValues();
+    method public void readFromParcel(android.os.Parcel);
+    method public void setAltitude(java.lang.Double);
+    method public void setDescription(java.lang.String);
+    method public void setId(long);
+    method public void setLatitude(java.lang.Double);
+    method public void setLongitude(java.lang.Double);
+    method public void writeToParcel(android.os.Parcel, int);
+    field public static final android.os.Parcelable.Creator CREATOR;
+  }
+
+  public class PFFInfoDatabase extends android.database.sqlite.SQLiteOpenHelper {
+    ctor public PFFInfoDatabase(android.content.Context);
+    method public android.content.pm.LocationBean addDefaultLocation();
+    method public android.content.pm.LocationBean addLocation(android.content.pm.LocationBean);
+    method public void deleteLocation(android.content.pm.LocationBean);
+    method public android.content.pm.LocationBean findLocationByDescription(java.lang.String);
+    method public android.content.pm.LocationBean findLocationById(long);
+    method public void onCreate(android.database.sqlite.SQLiteDatabase);
+    method public void onUpgrade(android.database.sqlite.SQLiteDatabase, int, int);
+    method public void updateLocation(android.content.pm.LocationBean);
+    field public static final java.lang.String DB_NAME = "pff_infos";
+    field public static final int DB_VERSION = 1; // 0x1
+    field public static final java.lang.String ENCODING_ASCII = "ASCII";
+    field public static final java.lang.String ENCODING_ISO88591 = "ISO8859_1";
+    field public static final java.lang.String ENCODING_UTF8 = "UTF-8";
+    field public static final java.lang.String FIELD_LOCATION_ALTITUDE = "altitude";
+    field public static final java.lang.String FIELD_LOCATION_DESCRIPTION = "description";
+    field public static final java.lang.String FIELD_LOCATION_LATITUDE = "latitude";
+    field public static final java.lang.String FIELD_LOCATION_LONGITUDE = "longitude";
+    field public static final java.lang.String TABLE_LOCATIONS = "locations";
+    field public static final java.lang.String TAG;
+    field public static final java.lang.Object[] dbLock;
+  }
+
   public class PackageInfo implements android.os.Parcelable {
     ctor public PackageInfo();
     method public int describeContents();
@@ -6913,13 +6958,19 @@ package android.content.pm {
     method public abstract android.content.res.Resources getResourcesForActivity(android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException;
     method public abstract android.content.res.Resources getResourcesForApplication(android.content.pm.ApplicationInfo) throws android.content.pm.PackageManager.NameNotFoundException;
     method public abstract android.content.res.Resources getResourcesForApplication(java.lang.String) throws android.content.pm.PackageManager.NameNotFoundException;
+    method public abstract java.lang.String[] getRevokeablePermissions();
     method public abstract android.content.pm.ServiceInfo getServiceInfo(android.content.ComponentName, int) throws android.content.pm.PackageManager.NameNotFoundException;
+    method public abstract java.lang.String[] getSpoofedPermissions(java.lang.String);
     method public abstract android.content.pm.FeatureInfo[] getSystemAvailableFeatures();
     method public abstract java.lang.String[] getSystemSharedLibraryNames();
     method public abstract java.lang.CharSequence getText(java.lang.String, int, android.content.pm.ApplicationInfo);
     method public abstract android.content.res.XmlResourceParser getXml(java.lang.String, int, android.content.pm.ApplicationInfo);
     method public abstract boolean hasSystemFeature(java.lang.String);
+    method public abstract boolean isRevokeablePermission(java.lang.String);
     method public abstract boolean isSafeMode();
+    method public abstract boolean isSpoofablePermission(java.lang.String);
+    method public abstract android.content.pm.LocationBean pffGetLocation();
+    method public abstract void pffSetLocation(android.content.pm.LocationBean);
     method public abstract java.util.List<android.content.pm.ResolveInfo> queryBroadcastReceivers(android.content.Intent, int);
     method public abstract java.util.List<android.content.pm.ProviderInfo> queryContentProviders(java.lang.String, int, int);
     method public abstract java.util.List<android.content.pm.InstrumentationInfo> queryInstrumentation(java.lang.String, int);
@@ -6935,6 +6986,7 @@ package android.content.pm {
     method public abstract void setApplicationEnabledSetting(java.lang.String, int, int);
     method public abstract void setComponentEnabledSetting(android.content.ComponentName, int, int);
     method public abstract void setInstallerPackageName(java.lang.String, java.lang.String);
+    method public abstract void setSpoofedPermissions(java.lang.String, java.lang.String[]);
     method public abstract void verifyPendingInstall(int, int);
     field public static final int COMPONENT_ENABLED_STATE_DEFAULT = 0; // 0x0
     field public static final int COMPONENT_ENABLED_STATE_DISABLED = 2; // 0x2
@@ -21852,6 +21904,7 @@ package android.telephony {
     method public int getGsmBitErrorRate();
     method public int getGsmSignalStrength();
     method public boolean isGsm();
+    method public boolean needsOldRilFeature(java.lang.String);
     method public void writeToParcel(android.os.Parcel, int);
   }
 
@@ -22630,13 +22683,19 @@ package android.test.mock {
     method public android.content.res.Resources getResourcesForActivity(android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException;
     method public android.content.res.Resources getResourcesForApplication(android.content.pm.ApplicationInfo);
     method public android.content.res.Resources getResourcesForApplication(java.lang.String) throws android.content.pm.PackageManager.NameNotFoundException;
+    method public java.lang.String[] getRevokeablePermissions();
     method public android.content.pm.ServiceInfo getServiceInfo(android.content.ComponentName, int) throws android.content.pm.PackageManager.NameNotFoundException;
+    method public java.lang.String[] getSpoofedPermissions(java.lang.String);
     method public android.content.pm.FeatureInfo[] getSystemAvailableFeatures();
     method public java.lang.String[] getSystemSharedLibraryNames();
     method public java.lang.CharSequence getText(java.lang.String, int, android.content.pm.ApplicationInfo);
     method public android.content.res.XmlResourceParser getXml(java.lang.String, int, android.content.pm.ApplicationInfo);
     method public boolean hasSystemFeature(java.lang.String);
+    method public boolean isRevokeablePermission(java.lang.String);
     method public boolean isSafeMode();
+    method public boolean isSpoofablePermission(java.lang.String);
+    method public android.content.pm.LocationBean pffGetLocation();
+    method public void pffSetLocation(android.content.pm.LocationBean);
     method public java.util.List<android.content.pm.ResolveInfo> queryBroadcastReceivers(android.content.Intent, int);
     method public java.util.List<android.content.pm.ProviderInfo> queryContentProviders(java.lang.String, int, int);
     method public java.util.List<android.content.pm.InstrumentationInfo> queryInstrumentation(java.lang.String, int);
@@ -22652,6 +22711,7 @@ package android.test.mock {
     method public void setApplicationEnabledSetting(java.lang.String, int, int);
     method public void setComponentEnabledSetting(android.content.ComponentName, int, int);
     method public void setInstallerPackageName(java.lang.String, java.lang.String);
+    method public void setSpoofedPermissions(java.lang.String, java.lang.String[]);
     method public void verifyPendingInstall(int, int);
   }
 

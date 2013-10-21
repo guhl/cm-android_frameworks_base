@@ -1,0 +1,13 @@
+<!--
+This file describes information protected by which permissions can be data protected.
+If you add anything here make sure that the implementation DO support protecting the data
+-->
+
+<spoofed-perms>
+	<item name="android.permission.READ_PHONE_STATE" />
+	<item name="android.permission.ACCESS_COARSE_LOCATION" />
+	<item name="android.permission.ACCESS_FINE_LOCATION" />
+	<item name="android.permission.READ_CONTACTS" />
+	<item name="android.permission.READ_CALL_LOG" />
+	<item name="android.permission.READ_CALENDAR" />
+</spoofed-perms>

@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.pff.LocationBean;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.graphics.drawable.Drawable;
@@ -34,6 +35,7 @@ import android.util.AndroidException;
 import android.util.DisplayMetrics;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -203,6 +205,20 @@ public abstract class PackageManager {
      */
     public static final int PERMISSION_DENIED = -1;
 
+    /**
+     * Permission check result: this is returned by {@link #pffCheckPermission}
+     * if the permission has been granted to the given package.
+     * @hide
+     */
+    public static final int PERMISSION_REVOKED = 0xFF;
+
+    /**
+     * Permission check result: this is returned by {@link #pffCheckPermission}
+     * if the permission has not been granted to the given package.
+     * @hide
+     */
+    public static final int PERMISSION_SPOOFED = 0x1FF;
+    
     /**
      * Signature check result: this is returned by {@link #checkSignatures}
      * if all signatures on the two packages match.
@@ -3163,4 +3179,94 @@ public abstract class PackageManager {
         return Environment.getDataDirectory().toString() + "/user/" + userId
                 + "/" + packageName;
     }
+
+    /**
+     * Returns the spoofable permissions.
+     * <p>
+     *
+     */
+    public abstract String[] getSpoofablePermissions();    
+    
+    /**
+     * Returns if a permission is spoofable.
+     * <p>
+     *
+     * @param perm The permission that is to be checked
+     */
+    public abstract boolean isSpoofablePermission(final String perm);    
+
+    /**
+     * Returns the spoofed permissions for given package.
+     * <p>
+     * NOTE: If the package has a shared uid then the spoofed permissions for that
+     * 			  uid will be returned.
+     *
+     * @param packageName Name of the package which spoofed permissions are needed
+     */
+    public abstract String[] getSpoofedPermissions(String packageName);
+
+    /**
+     * Sets the spoofed permissions for given package.
+     * <p>
+     * NOTE: If the package has a shared uid then this method will spoof the
+     * 			  permissions for that shared uid.
+     *
+     * @param packageName Name of the package which spoofed permissions are needed
+     * @param perms the spoofed permissions.
+     */
+    public abstract void setSpoofedPermissions(String packageName, String[] perms);
+    
+    /**
+     * Returns the spoofable permissions.
+     * <p>
+     *
+     */
+    public abstract String[] getRevokeablePermissions();    
+    
+    /**
+     * Returns if a permission is spoofable.
+     * <p>
+     *
+     * @param perm The permission that is to be checked
+     */
+    public abstract boolean isRevokeablePermission(final String perm);    
+
+    /**	
+     * Returns the revoked permissions for given package.
+     * <p>
+     * NOTE: If the package has a shared uid then the revoked permissions for that
+     * »        »       »         uid will be returned.
+     *
+     * @param packageName Name of the package which revoked permissions are needed
+     * @hide
+     */
+    public abstract String[] getRevokedPermissions(String packageName);
+    
+    /**
+     * Sets the revoked permissions for given package.
+     * <p>
+     * NOTE: If the package has a shared uid then this method will revoke the
+     * »        »       »         permissions for that shared uid.
+     *
+     * @param packageName Name of the package which revoked permissions are needed
+     * @param perms the revoked permissions.
+     * @hide
+     */
+    public abstract void setRevokedPermissions(String packageName, String[] perms);
+
+    /**
+     * Returns the current Location that will be used for spoofing.
+     * <p>
+     *
+    */
+    public abstract LocationBean pffGetLocation();
+    
+    /**
+     * Sets the current Location that will be used for spoofing.
+     * <p>
+     * @param loc the revoked permissions.
+     *
+    */
+    public abstract void pffSetLocation(LocationBean loc);
+    
 }
